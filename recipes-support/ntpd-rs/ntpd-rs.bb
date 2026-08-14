@@ -32,42 +32,51 @@ do_install:append() {
     install -D -m 0644 ${S}/docs/precompiled/man/ntp.toml.5 ${D}${mandir}/man5/ntp.toml.5
 
     # Config
-    install -D -m 0644 ${S}/docs/examples/conf/ntp.toml.default ${D}${sysconfdir}/ntpd-rs/ntp.toml
+    install -D -m 0644 ${S}/docs/examples/conf/ntp.toml.default ${D}${sysconfdir}/${PN}/ntp.toml
 
     # Systemd
-    install -D -m 0644 ${S}/docs/examples/conf/ntpd-rs.preset ${D}${systemd_unitdir}/system-preset/ntpd-rs.preset
-    install -D -m 0644 ${S}/docs/examples/conf/ntpd-rs.service ${D}${systemd_unitdir}/system/ntpd-rs.service
-    install -m 0644 ${S}/docs/examples/conf/ntpd-rs-metrics.service ${D}${systemd_unitdir}/system/ntpd-rs-metrics.service
+    install -D -m 0644 ${S}/docs/examples/conf/${PN}.preset ${D}${systemd_unitdir}/system-preset/${PN}.preset
+    install -D -m 0644 ${S}/docs/examples/conf/${PN}.service ${D}${systemd_unitdir}/system/${PN}.service
+    install -m 0644 ${S}/docs/examples/conf/${PN}-metrics.service ${D}${systemd_unitdir}/system/${PN}-metrics.service
 
     # Docs
-    install -D -m 0644 ${S}/docs/examples/conf/ntp.toml.default ${D}${docdir}/ntpd-rs/ntp.toml.default
-    install -m 0644  ${S}/COPYRIGHT ${D}${docdir}/ntpd-rs/COPYRIGHT
-    install -m 0644  ${S}/LICENSE-APACHE ${D}${docdir}/ntpd-rs/LICENSE-APACHE
-    install -m 0644  ${S}/LICENSE-MIT ${D}${docdir}/ntpd-rs/LICENSE-MIT
-    install -m 0644  ${S}/CHANGELOG.md ${D}${docdir}/ntpd-rs/CHANGELOG.md
-    install -m 0644  ${S}/README.md ${D}${docdir}/ntpd-rs/README.md
+    install -D -m 0644 ${S}/docs/examples/conf/ntp.toml.default ${D}${docdir}/${PN}/ntp.toml.default
+    install -m 0644  ${S}/COPYRIGHT ${D}${docdir}/${PN}/COPYRIGHT
+    install -m 0644  ${S}/LICENSE-APACHE ${D}${docdir}/${PN}/LICENSE-APACHE
+    install -m 0644  ${S}/LICENSE-MIT ${D}${docdir}/${PN}/LICENSE-MIT
+    install -m 0644  ${S}/CHANGELOG.md ${D}${docdir}/${PN}/CHANGELOG.md
+    install -m 0644  ${S}/README.md ${D}${docdir}/${PN}/README.md
 }
 
-FILES:${PN}:append = "${mandir}/man8/ntp-ctl.8 \
+PACKAGES =+ " ${PN}-metrics ${PN}-metrics-doc ${PN}-metrics-dbg"
+
+FILES:${PN}:append = "\
+    ${mandir}/man8/ntp-ctl.8 \
     ${mandir}/man8/ntp-daemon.8 \
-    ${mandir}/man8/ntp-metrics-exporter.8 \
     ${mandir}/man5/ntp-toml.5 \
-    ${sysconfdir}/ntpd-rs/ntp.toml \
-    ${systemd_unitdir}/system-preset/ntpd-rs.preset \
-    ${systemd_unitdir}/system/ntpd-rs.service \
-    ${systemd_unitdir}/system/ntpd-rs-metrics.service \
-    ${docdir}/ntpd-rs/ntp.toml.default \
-    ${docdir}/ntpd-rs/COPYRIGHT \
-    ${docdir}/ntpd-rs/LICENSE-APACHE \
-    ${docdir}/ntpd-rs/LICENSE-MIT \
-    ${docdir}/ntpd-rs/CHANGELOG.md \
-    ${docdir}/ntpd-rs/README.md"
+    ${sysconfdir}/${PN}/ntp.toml \
+    ${systemd_unitdir}/system-preset/${PN}.preset \
+    ${systemd_unitdir}/system/${PN}.service \
+    ${docdir}/${PN}/ntp.toml.default \
+    ${docdir}/${PN}/COPYRIGHT \
+    ${docdir}/${PN}/LICENSE-APACHE \
+    ${docdir}/${PN}/LICENSE-MIT \
+    ${docdir}/${PN}/CHANGELOG.md \
+    ${docdir}/${PN}/README.md"
+
+FILES:${PN}-metrics = "\
+    ${systemd_unitdir}/system/${PN}-metrics.service \
+    ${bindir}/ntp-metrics-exporter"
+FILES:${PN}-metrics-doc = "${mandir}/man8/ntp-metrics-exporter.8"
+FILES:${PN}-metrics-dbg = "${bindir}/.debug/ntp-metrics-exporter"
 
 SYSTEMD_AUTO_ENABLE = "enable"
-SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE:${PN} = "ntpd-rs.service"
+SYSTEMD_PACKAGES = "${PN} ${PN}-metrics"
+SYSTEMD_SERVICE:${PN} = "${PN}.service"
+SYSTEMD_SERVICE:${PN}-metrics = "${PN}-metrics.service"
 
 RCONFLICTS:${PN} = "ntp ntimed chrony"
 
-USERADD_PACKAGES = "${PN}"
-USERADD_PARAM:${PN} = "--system --home ${localstatedir}/lib/ntpd-rs --user-group ntpd-rs"
+USERADD_PACKAGES = "${PN} ${PN}-metrics"
+USERADD_PARAM:${PN} = "--system --home ${localstatedir}/lib/${PN} --user-group ${PN}"
+USERADD_PARAM:${PN}-metrics = "--system --home ${localstatedir}/lib/${PN}-metrics --user-group ${PN}-observe"
