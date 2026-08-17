@@ -1,0 +1,52 @@
+#! /bin/sh
+
+# System V init script for ntpd-rs-metrics
+
+### BEGIN INIT INFO
+# Provides:        ntpd-rs
+# Required-Start:  $network $remote_fs $syslog
+# Required-Stop:   $network $remote_fs $syslog
+# Default-Start:   2 3 4 5
+# Default-Stop:
+# Short-Description: Start ntpd-rs-metrics daemon
+### END INIT INFO
+
+DAEMON=/usr/bin/ntp-metrics-exporter
+PIDFILE=/run/ntpd-rs-metrics/ntpd-rs.pid
+SOCKDIR=/run/ntpd-rs-metrics
+USER=ntpd-rs-observe
+
+. /etc/init.d/functions
+
+startdaemon(){
+  [ -d "$SOCKDIR" ] || mkdir -p "$SOCKDIR"
+	chown $USER:$USER "$SOCKDIR"
+	start-stop-daemon --start --quiet --oknodo --background --pidfile $PIDFILE --startas $DAEMON -- "$@"
+}
+stopdaemon(){
+	start-stop-daemon --stop --quiet --oknodo -p $PIDFILE
+}
+
+case "$1" in
+  start)
+	  startdaemon
+	;;
+  stop)
+    stopdaemon
+	;;
+  force-reload | restart | reload)
+    stopdaemon
+	  startdaemon
+	;;
+  status)
+	  status $DAEMON;
+	  exit $?
+	;;
+  *)
+	  echo "Usage: ntpd-rs-metrics { start | stop | status | restart | reload }" >&2
+	  exit 1
+	;;
+esac
+
+exit 0
+

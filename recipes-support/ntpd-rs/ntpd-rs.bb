@@ -9,13 +9,16 @@ LIC_FILES_CHKSUM = "\
     file://LICENSE-MIT;md5=ae0a4dfb4bd6ae01c2bfdb05ef2972d3 \
 "
 
-inherit cargo_bin systemd useradd pkgconfig
+inherit cargo_bin systemd useradd pkgconfig update-rc.d
 
 DEPENDS = "openssl"
 
-SRC_URI = "git://github.com/pendulum-project/ntpd-rs.git;protocol=https;tag=v1.9.0;nobranch=1;destsuffix=${S}"
+SRC_URI = "git://github.com/pendulum-project/ntpd-rs.git;protocol=https;tag=v1.9.0;nobranch=1"
 SRC_URI[sha256sum] = "6cc79cd2743957296276c35db9a2328384e898ece6d9c53d561b8b36c8df8224"
 SRCREV = "46ec9bb4d5b6cb24f814f5543d85b9138afb4cba"
+
+SRC_URI += "file://ntpd-rs \
+            file://ntpd-rs-metrics"
 
 CARGO_BUILD_FLAGS:append = " --no-default-features"
 CARGO_FEATURES = "rustcrypto openssl"
@@ -39,6 +42,10 @@ do_install:append() {
     install -D -m 0644 ${S}/docs/examples/conf/${PN}.service ${D}${systemd_unitdir}/system/${PN}.service
     install -m 0644 ${S}/docs/examples/conf/${PN}-metrics.service ${D}${systemd_unitdir}/system/${PN}-metrics.service
 
+    # SysV
+    install -D -m 0755 ${UNPACKDIR}/ntpd-rs ${D}${sysconfdir}/init.d/ntpd-rs
+    install -D -m 0755 ${UNPACKDIR}/ntpd-rs-metrics ${D}${sysconfdir}/init.d/ntpd-rs-metrics
+
     # Docs
     install -D -m 0644 ${S}/docs/examples/conf/ntp.toml.default ${D}${docdir}/${PN}/ntp.toml.default
     install -m 0644  ${S}/COPYRIGHT ${D}${docdir}/${PN}/COPYRIGHT
@@ -57,6 +64,7 @@ FILES:${PN}:append = "\
     ${sysconfdir}/${PN}/ntp.toml \
     ${systemd_unitdir}/system-preset/${PN}.preset \
     ${systemd_unitdir}/system/${PN}.service \
+    ${sysconfdir}/init.d/ntpd-rs \
     ${docdir}/${PN}/ntp.toml.default \
     ${docdir}/${PN}/COPYRIGHT \
     ${docdir}/${PN}/LICENSE-APACHE \
@@ -66,6 +74,7 @@ FILES:${PN}:append = "\
 
 FILES:${PN}-metrics = "\
     ${systemd_unitdir}/system/${PN}-metrics.service \
+    ${sysconfdir}/init.d/ntpd-rs-metrics \
     ${bindir}/ntp-metrics-exporter"
 FILES:${PN}-metrics-doc = "${mandir}/man8/ntp-metrics-exporter.8"
 FILES:${PN}-metrics-dbg = "${bindir}/.debug/ntp-metrics-exporter"
@@ -74,6 +83,10 @@ SYSTEMD_AUTO_ENABLE = "enable"
 SYSTEMD_PACKAGES = "${PN} ${PN}-metrics"
 SYSTEMD_SERVICE:${PN} = "${PN}.service"
 SYSTEMD_SERVICE:${PN}-metrics = "${PN}-metrics.service"
+
+INITSCRIPT_PACKAGES = "${PN} ${PN}-metrics"
+INITSCRIPT_NAME:${PN} = "${PN}"
+INITSCRIPT_NAME:${PN}-metrics = "${PN}-metrics"
 
 RCONFLICTS:${PN} = "ntp ntimed chrony"
 
